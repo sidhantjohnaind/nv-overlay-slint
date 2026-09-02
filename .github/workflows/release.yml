@@ -1,0 +1,174 @@
+﻿name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag Name (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # AMD / x86_64 Targets
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            use_cross: true
+            suffix: ""
+            archive: tar.gz
+            arch_name: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            use_cross: true
+            suffix: ""
+            archive: tar.gz
+            arch_name: x86_64-unknown-linux-musl
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            use_cross: false
+            suffix: ".exe"
+            archive: zip
+            arch_name: x86_64-pc-windows-msvc
+
+          # ARM / ARM64 Targets
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            use_cross: true
+            suffix: ""
+            archive: tar.gz
+            arch_name: aarch64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            use_cross: true
+            suffix: ""
+            archive: tar.gz
+            arch_name: aarch64-unknown-linux-musl
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+            use_cross: true
+            suffix: ""
+            archive: tar.gz
+            arch_name: armv7-unknown-linux-gnueabihf
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            use_cross: false
+            suffix: ".exe"
+            archive: zip
+            arch_name: aarch64-pc-windows-msvc
+
+          # RISC-V Target
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-gnu
+            use_cross: true
+            suffix: ""
+            archive: tar.gz
+            arch_name: riscv64gc-unknown-linux-gnu
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-rs
+        if: matrix.use_cross
+        run: |
+          cargo install cross --git https://github.com/cross-rs/cross --locked || cargo install cross --locked
+
+      - name: Build binary (Cross)
+        if: matrix.use_cross
+        run: |
+          cross build --target ${{ matrix.target }} --release
+
+      - name: Build binary (Native/Cargo)
+        if: ${{ !matrix.use_cross }}
+        run: |
+          cargo build --target ${{ matrix.target }} --release
+
+      - name: Package Release Assets (Linux / Unix)
+        if: matrix.archive == 'tar.gz'
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [ -z "$TAG" ] || [ "$TAG" = "main" ]; then
+            TAG="${{ github.event.inputs.tag_name || 'v1.0.0' }}"
+          fi
+          PKG_NAME="nv-overlay-slint-${TAG}-${{ matrix.arch_name }}"
+          mkdir -p "dist/${PKG_NAME}"
+          cp "target/${{ matrix.target }}/release/nv-overlay-slint" "dist/${PKG_NAME}/"
+          cp -r packaging "dist/${PKG_NAME}/"
+          cp README.md LICENSE "dist/${PKG_NAME}/"
+          cd dist
+          tar -czf "${PKG_NAME}.tar.gz" "${PKG_NAME}"
+          sha256sum "${PKG_NAME}.tar.gz" > "${PKG_NAME}.tar.gz.sha256"
+
+      - name: Package Release Assets (Windows)
+        if: matrix.archive == 'zip'
+        shell: bash
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [ -z "$TAG" ] || [ "$TAG" = "main" ]; then
+            TAG="${{ github.event.inputs.tag_name || 'v1.0.0' }}"
+          fi
+          PKG_NAME="nv-overlay-slint-${TAG}-${{ matrix.arch_name }}"
+          mkdir -p "dist/${PKG_NAME}"
+          cp "target/${{ matrix.target }}/release/nv-overlay-slint.exe" "dist/${PKG_NAME}/"
+          cp -r packaging "dist/${PKG_NAME}/"
+          cp README.md LICENSE "dist/${PKG_NAME}/"
+          cd dist
+          7z a -tzip "${PKG_NAME}.zip" "${PKG_NAME}"
+          sha256sum "${PKG_NAME}.zip" > "${PKG_NAME}.zip.sha256"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: assets-${{ matrix.arch_name }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.sha256
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate Unified Checksums
+        run: |
+          cd release-assets
+          cat *.sha256 > SHA256SUMS.txt || true
+          rm -f *.sha256
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name != 'main' && github.ref_name || github.event.inputs.tag_name }}
+          name: NV-Overlay Release ${{ github.ref_name != 'main' && github.ref_name || github.event.inputs.tag_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            release-assets/*

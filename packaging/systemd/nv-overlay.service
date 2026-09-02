@@ -1,0 +1,15 @@
+﻿[Unit]
+Description=NVIDIA Performance Overlay (Slint / Zero-GPU HUD)
+Documentation=https://github.com/sidhantjohnaind/nv-overlay-slint
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/nv-overlay-slint
+Restart=on-failure
+RestartSec=3
+Environment=SLINT_BACKEND=winit-software
+
+[Install]
+WantedBy=graphical-session.target

@@ -1,0 +1,11 @@
+﻿[Desktop Entry]
+Type=Application
+Name=NV-Overlay HUD
+GenericName=Performance Overlay
+Comment=NVIDIA GeForce Performance Overlay in Rust (Zero-GPU Footprint)
+Exec=nv-overlay-slint
+Icon=utilities-system-monitor
+Terminal=false
+Categories=Utility;System;Monitor;Game;
+StartupNotify=false
+X-GNOME-Autostart-enabled=true
