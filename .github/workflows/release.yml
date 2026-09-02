@@ -14,11 +14,6 @@ on:
 permissions:
   contents: write
 
-env:
-  RUST_FONTCONFIG_DLOPEN: "1"
-  PKG_CONFIG_ALLOW_CROSS: "1"
-  CROSS_NO_WARNINGS: "0"
-
 jobs:
   build:
     name: Build (${{ matrix.target }})
@@ -30,16 +25,10 @@ jobs:
           # AMD / x86_64 Targets
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            use_cross: true
+            use_cross: false
             suffix: ""
             archive: tar.gz
             arch_name: x86_64-unknown-linux-gnu
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            use_cross: true
-            suffix: ""
-            archive: tar.gz
-            arch_name: x86_64-unknown-linux-musl
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             use_cross: false
@@ -54,12 +43,6 @@ jobs:
             suffix: ""
             archive: tar.gz
             arch_name: aarch64-unknown-linux-gnu
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-musl
-            use_cross: true
-            suffix: ""
-            archive: tar.gz
-            arch_name: aarch64-unknown-linux-musl
           - os: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
             use_cross: true
@@ -84,6 +67,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Install Linux Native Dependencies
+        if: matrix.os == 'ubuntu-latest' && !matrix.use_cross
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfontconfig1-dev libx11-dev libxfixes-dev
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
