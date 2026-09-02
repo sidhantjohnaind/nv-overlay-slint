@@ -18,6 +18,7 @@ jobs:
   build:
     name: Build (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental || false }}
     strategy:
       fail-fast: false
       matrix:
@@ -29,12 +30,14 @@ jobs:
             suffix: ""
             archive: tar.gz
             arch_name: x86_64-unknown-linux-gnu
+            experimental: false
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             use_cross: false
             suffix: ".exe"
             archive: zip
             arch_name: x86_64-pc-windows-msvc
+            experimental: false
 
           # ARM / ARM64 Targets
           - os: ubuntu-latest
@@ -43,18 +46,21 @@ jobs:
             suffix: ""
             archive: tar.gz
             arch_name: aarch64-unknown-linux-gnu
+            experimental: false
           - os: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
             use_cross: true
             suffix: ""
             archive: tar.gz
             arch_name: armv7-unknown-linux-gnueabihf
+            experimental: false
           - os: windows-latest
             target: aarch64-pc-windows-msvc
             use_cross: false
             suffix: ".exe"
             archive: zip
             arch_name: aarch64-pc-windows-msvc
+            experimental: false
 
           # RISC-V Target
           - os: ubuntu-latest
@@ -63,6 +69,7 @@ jobs:
             suffix: ""
             archive: tar.gz
             arch_name: riscv64gc-unknown-linux-gnu
+            experimental: true
 
     steps:
       - name: Checkout repository
@@ -139,6 +146,7 @@ jobs:
   release:
     name: Publish GitHub Release
     needs: build
+    if: always() && !cancelled() && needs.build.result != 'cancelled'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

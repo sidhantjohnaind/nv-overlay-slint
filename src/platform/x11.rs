@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use std::ffi::{c_void, CStr, CString};
-use std::os::raw::{c_int, c_long, c_uchar, c_uint, c_ulong};
+use std::os::raw::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong};
 
 type Display = c_void;
 type Window = c_ulong;
@@ -15,11 +15,11 @@ const XA_ATOM: Atom = 4;
 const SUBSTRUCTURE_REDIRECT_MASK: c_long = 1 << 20;
 const SUBSTRUCTURE_NOTIFY_MASK: c_long = 1 << 19;
 
-type FnXOpenDisplay = unsafe extern "C" fn(*const i8) -> *mut Display;
+type FnXOpenDisplay = unsafe extern "C" fn(*const c_char) -> *mut Display;
 type FnXCloseDisplay = unsafe extern "C" fn(*mut Display) -> c_int;
 type FnXFlush = unsafe extern "C" fn(*mut Display) -> c_int;
 type FnXDefaultRootWindow = unsafe extern "C" fn(*mut Display) -> Window;
-type FnXInternAtom = unsafe extern "C" fn(*mut Display, *const i8, c_int) -> Atom;
+type FnXInternAtom = unsafe extern "C" fn(*mut Display, *const c_char, c_int) -> Atom;
 type FnXChangeProperty = unsafe extern "C" fn(
     *mut Display,
     Window,
@@ -39,7 +39,7 @@ type FnXQueryTree = unsafe extern "C" fn(
     *mut *mut Window,
     *mut c_uint,
 ) -> c_int;
-type FnXFetchName = unsafe extern "C" fn(*mut Display, Window, *mut *mut i8) -> c_int;
+type FnXFetchName = unsafe extern "C" fn(*mut Display, Window, *mut *mut c_char) -> c_int;
 type FnXFree = unsafe extern "C" fn(*mut c_void) -> c_int;
 type FnXSendEvent = unsafe extern "C" fn(*mut Display, Window, c_int, c_long, *mut c_void) -> c_int;
 type FnXMoveWindow = unsafe extern "C" fn(*mut Display, Window, c_int, c_int) -> c_int;
@@ -69,7 +69,7 @@ unsafe fn find_window_by_title(
     x_fetch_name: &libloading::Symbol<FnXFetchName>,
     x_free: &libloading::Symbol<FnXFree>,
 ) -> Option<Window> {
-    let mut name_ptr: *mut i8 = std::ptr::null_mut();
+    let mut name_ptr: *mut c_char = std::ptr::null_mut();
     if (x_fetch_name)(dpy, current, &mut name_ptr) != 0 && !name_ptr.is_null() {
         let name = CStr::from_ptr(name_ptr).to_string_lossy();
         let matches = name.contains(target);

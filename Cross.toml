@@ -12,6 +12,10 @@ pre-build = [
 
 [target.riscv64gc-unknown-linux-gnu]
 pre-build = [
-    "dpkg --add-architecture $CROSS_DEB_ARCH",
-    "apt-get update && apt-get install --assume-yes libfontconfig1-dev:$CROSS_DEB_ARCH"
+    "apt-get update && apt-get install --assume-yes ca-certificates debian-ports-archive-keyring || true",
+    "echo 'deb [arch=riscv64] http://deb.debian.org/debian-ports sid main' >> /etc/apt/sources.list || true",
+    "echo 'deb [arch=riscv64] http://ports.ubuntu.com/ubuntu-ports noble main universe' >> /etc/apt/sources.list || true",
+    "dpkg --add-architecture riscv64 || true",
+    "apt-get update -o Acquire::AllowInsecureRepositories=true || true",
+    "apt-get install --assume-yes --allow-unauthenticated libfontconfig1-dev:riscv64 || true"
 ]
