@@ -33,7 +33,7 @@ A high-performance, lightweight NVIDIA GeForce-style performance overlay written
 
 ```bash
 # Clone the repository
-git clone https://github.com/sidhantaind/nv-overlay-slint.git
+git clone https://github.com/sidhantjohnaind/nv-overlay-slint.git
 cd nv-overlay-slint
 
 # Build optimized release binary
