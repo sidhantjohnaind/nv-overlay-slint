@@ -14,6 +14,10 @@ on:
 permissions:
   contents: write
 
+env:
+  RUST_FONTCONFIG_DLOPEN: "1"
+  PKG_CONFIG_ALLOW_CROSS: "1"
+
 jobs:
   build:
     name: Build (${{ matrix.target }})

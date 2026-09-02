@@ -1,13 +1,13 @@
-[package]
+﻿[package]
 name = "nv-overlay-slint"
 version = "1.0.0"
 edition = "2021"
-authors = ["Antigravity Team"]
+authors = ["Sidhanta <sidhantjohnaind@users.noreply.github.com>"]
 description = "NVIDIA GeForce Performance Overlay in Rust using Slint (Software/Zero-GPU Renderer)"
 license = "MIT"
 
 [dependencies]
-slint = { version = "1.9", default-features = false, features = ["std", "backend-winit", "renderer-software", "renderer-femtovg", "compat-1-2"] }
+slint = { version = "1.9", default-features = false, features = ["std", "backend-winit", "renderer-software", "compat-1-2"] }
 sysinfo = "0.31"
 crossbeam-channel = "0.5"
 parking_lot = "0.12"
@@ -24,6 +24,7 @@ slint-build = "1.9"
 [features]
 default = ["nvml"]
 nvml = ["dep:nvml-wrapper"]
+femtovg = ["slint/renderer-femtovg"]
 
 [profile.release]
 opt-level = 3
