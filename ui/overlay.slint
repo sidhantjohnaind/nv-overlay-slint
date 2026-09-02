@@ -1,0 +1,200 @@
+export struct TelemetryData {
+    fps: string,
+    latency: string,
+    gpu_util: string,
+    gpu_mem_util: string,    // Memory controller bus %
+    gpu_encoder_util: string, // NVENC %
+    gpu_temp: string,
+    gpu_clock: string,
+    gpu_mem_clock: string,
+    gpu_power: string,
+    gpu_fan: string,         // Real fan duty %
+    vram_used: string,
+    cpu_util: string,
+    cpu_temp: string,
+    ram_used: string,
+}
+
+export component OverlayWindow inherits Window {
+    title: "NV-Overlay HUD";
+    no-frame: true;
+    background: transparent;
+    always-on-top: true;
+    
+    in property <TelemetryData> data: {
+        fps: "N/A",
+        latency: "N/A",
+        gpu_util: "0",
+        gpu_mem_util: "0",
+        gpu_encoder_util: "0",
+        gpu_temp: "0",
+        gpu_clock: "0",
+        gpu_mem_clock: "0",
+        gpu_power: "0",
+        gpu_fan: "0",
+        vram_used: "0.0",
+        cpu_util: "0",
+        cpu_temp: "0",
+        ram_used: "0.0",
+    };
+    in property <int> preset_mode: 0; // 0: Basic, 1: Advanced, 2: Bandwidth/Streaming, 3: FPS Only
+    in property <bool> overlay_visible: true;
+
+    width: preset_mode == 0 ? 430px : (preset_mode == 1 ? 820px : (preset_mode == 2 ? 660px : 160px));
+    height: 30px;
+
+    // 100% borderless, transparent floating HUD with larger, crisp typography
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        border-width: 0px;
+        visible: root.overlay_visible;
+
+        // ==========================================
+        // Preset 0: One-Liner Basic (Standard)
+        // FPS | GPU % | CPU % | LAT ms
+        // ==========================================
+        if preset_mode == 0 : HorizontalLayout {
+            alignment: end;
+            spacing: 7px;
+            padding-right: 4px;
+
+            // FPS
+            Text { text: "FPS"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.fps; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            // GPU
+            Text { text: "GPU"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.gpu_util; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "%"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            // CPU
+            Text { text: "CPU"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.cpu_util; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "%"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            // LAT
+            Text { text: "LAT"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.latency; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            if root.data.latency != "N/A" : Text { text: "ms"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+        }
+
+        // ==========================================
+        // Preset 1: One-Liner Advanced (100% Real)
+        // FPS | GPU % °C MHz W Fan% MemMHz VRAM GB | CPU % °C | LAT ms
+        // ==========================================
+        if preset_mode == 1 : HorizontalLayout {
+            alignment: end;
+            spacing: 6px;
+            padding-right: 4px;
+
+            // FPS
+            Text { text: "FPS"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.fps; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            // GPU
+            Text { text: "GPU"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.gpu_util; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "%"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+
+            Text { text: root.data.gpu_temp; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "°C"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+
+            Text { text: root.data.gpu_clock; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "MHz"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+
+            Text { text: root.data.gpu_power; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "W"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+
+            Text { text: root.data.gpu_fan; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "%"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+
+            Text { text: root.data.gpu_mem_clock; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "MHz"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+
+            Text { text: "VRAM"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.vram_used; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "GB"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            // CPU
+            Text { text: "CPU"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.cpu_util; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "%"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+
+            Text { text: root.data.cpu_temp; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "°C"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            // LAT
+            Text { text: "LAT"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.latency; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            if root.data.latency != "N/A" : Text { text: "ms"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+        }
+
+        // ==========================================
+        // Preset 2: Bandwidth & Video Streaming
+        // FPS | GPU % | VRAM GB | BUS % | NVENC % | CPU % | RAM GB
+        // ==========================================
+        if preset_mode == 2 : HorizontalLayout {
+            alignment: end;
+            spacing: 7px;
+            padding-right: 4px;
+
+            Text { text: "FPS"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.fps; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            Text { text: "GPU"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.gpu_util; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "%"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            Text { text: "VRAM"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.vram_used; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "GB"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            Text { text: "BUS"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.gpu_mem_util; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "%"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            Text { text: "ENC"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.gpu_encoder_util; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "%"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            Text { text: "CPU"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.cpu_util; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "%"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+            Text { text: "|"; color: #6e737d; font-size: 15.5px; vertical-alignment: center; }
+
+            Text { text: "RAM"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.ram_used; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+            Text { text: "GB"; color: #b4b9be; font-size: 14.5px; vertical-alignment: center; }
+        }
+
+        // ==========================================
+        // Preset 3: Minimal FPS Counter
+        // FPS
+        // ==========================================
+        if preset_mode == 3 : HorizontalLayout {
+            alignment: end;
+            spacing: 7px;
+            padding-right: 4px;
+            Text { text: "FPS"; color: #b4b9be; font-size: 15.5px; font-weight: 700; vertical-alignment: center; }
+            Text { text: root.data.fps; color: #fafafa; font-size: 16.5px; font-family: "monospace"; font-weight: 700; vertical-alignment: center; }
+        }
+    }
+}
